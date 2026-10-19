@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MatterLab — Gravity Lab</title>
+<style>
+* { box-sizing: border-box; }
+body { margin: 0; padding: 18px; background: #08111f; color: #e8f1ff; font-family: Arial, sans-serif; }
+header, section { max-width: 700px; margin: 0 auto 18px; }
+header { padding: 22px; background: #111f35; border: 1px solid #29415f; border-radius: 16px; }
+h1 { margin: 0 0 8px; color: #69d5ff; }
+p { line-height: 1.6; color: #b8c9df; }
+.panel { padding: 20px; margin-bottom: 16px; background: #111f35; border: 1px solid #29415f; border-radius: 16px; }
+h2 { font-size: 19px; margin-top: 0; }
+.equation { text-align: center; padding: 18px 8px; background: #091626; border-radius: 12px; font-size: 24px; color: #69d5ff; }
+.scene { position: relative; height: 180px; display: flex; align-items: center; justify-content: space-around; overflow: hidden; }
+.orb { width: 54px; height: 54px; flex-shrink: 0; border-radius: 50%; display: grid; place-items: center; background: radial-gradient(circle at 30% 25%, #a8f0ff, #2187e9 65%, #10366c); box-shadow: 0 0 22px #258cff55; color: white; font-weight: bold; z-index: 1; }
+.orb.second { background: radial-gradient(circle at 30% 25%, #ffe1a1, #e88b30 65%, #743a16); box-shadow: 0 0 22px #ffad4055; }
+.gravity-line { position: absolute; top: 50%; left: 23%; right: 23%; height: 2px; background: #52718f; }
+.arrow { position: absolute; top: 43%; color: #69d5ff; font-size: 25px; font-weight: bold; }
+.arrow.left { left: 32%; }
+.arrow.right { right: 32%; }
+.distance-label { position: absolute; bottom: 15px; font-size: 13px; color: #b8c9df; }
+label { display: flex; justify-content: space-between; gap: 10px; margin: 18px 0 8px; }
+input[type=range] { width: 100%; accent-color: #48c8ff; }
+.value { color: #69d5ff; font-weight: bold; }
+.result { padding: 18px; background: #091626; border-radius: 12px; margin-top: 16px; }
+.force { font-size: 27px; font-weight: bold; color: #69d5ff; overflow-wrap: anywhere; margin: 10px 0; }
+button { background: #1677d2; border: 0; border-radius: 9px; padding: 12px 18px; color: white; font-size: 15px; cursor: pointer; }
+.note { font-size: 13px; }
+footer { text-align: center; color: #8295ad; padding: 10px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>MatterLab</h1>
+  <p>GRAVITY LAB / EXPERIMENT 02</p>
+  <p>Explore how mass and distance affect gravitational attraction between two objects.</p>
+</header>
+<section class="panel">
+  <h2>Newton's Law of Gravitation</h2>
+  <div class="equation">F = G × m₁ × m₂ / r²</div>
+  <p>G = 6.67430 × 10⁻¹¹ N·m²/kg²</p>
+</section>
+<section class="panel">
+  <h2>Interactive experiment</h2>
+  <div class="scene">
+    <div class="gravity-line"></div>
+    <div class="orb">m₁</div>
+    <div class="orb second">m₂</div>
+    <span class="arrow left">→</span>
+    <span class="arrow right">←</span>
+    <div class="distance-label" id="sceneDistance">Distance: 5 m</div>
+  </div>
+  <label><span>Mass 1</span><span class="value" id="m1Text">100 kg</span></label>
+  <input id="m1" type="range" min="1" max="1000" value="100" step="1">
+  <label><span>Mass 2</span><span class="value" id="m2Text">100 kg</span></label>
+  <input id="m2" type="range" min="1" max="1000" value="100" step="1">
+  <label><span>Distance between centres</span><span class="value" id="rText">5 m</span></label>
+  <input id="r" type="range" min="1" max="20" value="5" step="0.5">
+  <div class="result">
+    <p>Calculated gravitational force</p>
+    <div class="force" id="force">2.66972 × 10⁻⁸ N</div>
+    <p id="comparison">Reference: current settings</p>
+  </div>
+  <p class="note">The arrows illustrate attraction; they are not drawn to scale. The displayed force is calculated using Newton's law, not measured from the animation.</p>
+  <button id="reset">Reset experiment</button>
+</section>
+<section class="panel">
+  <h2>Discover the relationship</h2>
+  <p id="insight" aria-live="polite">Change one variable at a time and observe the force.</p>
+  <p class="note">Try doubling the distance while keeping both masses unchanged. What happens to the force?</p>
+</section>
+<footer>MatterLab · Explore. Experiment. Discover.</footer>
+<script>
+const G = 6.67430e-11;
+const m1 = document.getElementById("m1");
+const m2 = document.getElementById("m2");
+const r = document.getElementById("r");
+const initial = { m1: 100, m2: 100, r: 5 };
+let previousForce = null;
+function scientific(value) {
+  if (value === 0) return "0 N";
+  return value.toExponential(5) + " N";
+}
+function calculate() {
+  const a = Number(m1.value);
+  const b = Number(m2.value);
+  const d = Number(r.value);
+  const force = G * a * b / (d * d);
+  document.getElementById("m1Text").textContent = a + " kg";
+  document.getElementById("m2Text").textContent = b + " kg";
+  document.getElementById("rText").textContent = d + " m";
+  document.getElementById("sceneDistance").textContent = "Distance: " + d + " m";
+  document.getElementById("force").textContent = scientific(force);
+  if (previousForce === null) {
+    document.getElementById("comparison").textContent = "Reference: current settings";
+  } else {
+    const ratio = force / previousForce;
+    document.getElementById("comparison").textContent = "Force compared with previous settings: " + ratio.toFixed(3) + "×";
+  }
+  document.getElementById("insight").textContent =
+    "The force is proportional to the product of the two masses and inversely proportional to the square of their centre-to-centre distance.";
+  previousForce = force;
+}
+[m1, m2, r].forEach(control => control.addEventListener("input", calculate));
+document.getElementById("reset").addEventListener("click", () => {
+  m1.value = initial.m1;
+  m2.value = initial.m2;
+  r.value = initial.r;
+  previousForce = null;
+  calculate();
+});
+calculate();
+</script>
+</body>
+</html>
